@@ -86,6 +86,41 @@ public class Emoji {
         }
     }
 
+    public static List<Emoji> findByCategory(String category)
+    {
+        try {
+            // Création de la liste d'emoji à partir des données en BDD
+            List<Emoji> emojis = new ArrayList<>();
+            // Envoie une requête en BDD et récupère les résultats
+            DatabaseHandler dbHandler = DatabaseHandler.getInstance();
+            PreparedStatement statement = dbHandler.getConnection().prepareStatement("SELECT emoji.id, emoji.code, emoji.characters " +
+                    "FROM emoji, tags WHERE tags.name= ?"
+                // Rajouter ces deux lignes si on rencontre une erreur de type "Operation not allowed for a result set of type ResultSet.TYPE_FORWARD_ONLY"
+                , ResultSet.TYPE_SCROLL_SENSITIVE
+                , ResultSet.CONCUR_UPDATABLE
+            );
+
+            statement.setString(1, category);
+            ResultSet set = statement.executeQuery();
+
+            while (set.next()) {
+                Emoji emoji = new Emoji(
+                    set.getInt("id"),
+                    set.getString("code"),
+                    set.getString("characters")
+                );
+                // Ajoute l'objet à la liste
+                emojis.add(emoji);
+            }
+            // Renvoie la liste
+            return emojis;
+        } catch (SQLException exception) {
+            exception.printStackTrace();
+            System.exit(1);
+            return null;
+        }
+    }
+
     public int getId() {
         return id;
     }
